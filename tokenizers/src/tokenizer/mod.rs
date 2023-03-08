@@ -74,11 +74,11 @@ pub trait Model {
     /// are expected to be relative to the given sequence.
     fn tokenize(&self, sequence: &str) -> Result<Vec<Token>>;
     /// Find the ID associated to a string token
-    fn token_to_id(&self, token: &str) -> Option<u32>;
+    fn token_to_id(&self, token: &str) -> Option<u64>;
     /// Find the string token associated to an ID
-    fn id_to_token(&self, id: u32) -> Option<String>;
+    fn id_to_token(&self, id: u64) -> Option<String>;
     /// Retrieve the entire vocabulary mapping (token -> ID)
-    fn get_vocab(&self) -> HashMap<String, u32>;
+    fn get_vocab(&self) -> HashMap<String, u64>;
     /// Retrieve the size of the vocabulary
     fn get_vocab_size(&self) -> usize;
     /// Save the current `Model` in the given folder, using the given `prefix` for the various
@@ -111,7 +111,7 @@ pub trait PostProcessor {
                 .get_overflowing_mut()
                 .iter_mut()
                 .for_each(|encoding| encoding.set_sequence_id(i));
-            encoding.set_type_ids(vec![i as u32; encoding.len()]);
+            encoding.set_type_ids(vec![i as u64; encoding.len()]);
         });
 
         let encodings = self.process_encodings(encodings, add_special_tokens)?;
@@ -179,12 +179,12 @@ pub trait Trainer {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Token {
-    pub id: u32,
+    pub id: u64,
     pub value: String,
     pub offsets: (usize, usize),
 }
 impl Token {
-    pub fn new(id: u32, value: String, offsets: (usize, usize)) -> Self {
+    pub fn new(id: u64, value: String, offsets: (usize, usize)) -> Self {
         Self { id, value, offsets }
     }
 }
@@ -627,7 +627,7 @@ where
     }
 
     /// Get the vocabulary
-    pub fn get_vocab(&self, with_added_tokens: bool) -> HashMap<String, u32> {
+    pub fn get_vocab(&self, with_added_tokens: bool) -> HashMap<String, u64> {
         let mut final_vocab = self.model.get_vocab();
 
         if with_added_tokens {
@@ -654,12 +654,12 @@ where
     }
 
     /// Converts a token in the corresponding id.
-    pub fn token_to_id(&self, token: &str) -> Option<u32> {
+    pub fn token_to_id(&self, token: &str) -> Option<u64> {
         self.added_vocabulary.token_to_id(token, &self.model)
     }
 
     /// Converts an id to the corresponding token.
-    pub fn id_to_token(&self, id: u32) -> Option<String> {
+    pub fn id_to_token(&self, id: u64) -> Option<String> {
         self.added_vocabulary.id_to_token(id, &self.model)
     }
 
@@ -667,7 +667,7 @@ where
     fn encode_single_sequence(
         &self,
         sequence: InputSequence,
-        type_id: u32,
+        type_id: u64,
         offsets_type: OffsetType,
     ) -> Result<Encoding> {
         let encode = |is_pre_tokenized, subseq_idx, subseq| -> Result<Encoding> {
@@ -679,7 +679,7 @@ where
                 pre_tokenized,
                 type_id,
                 if is_pre_tokenized {
-                    Some(subseq_idx as u32)
+                    Some(subseq_idx)
                 } else {
                     None
                 },
@@ -795,7 +795,7 @@ where
     }
 
     /// Decode the given ids, back to a String
-    pub fn decode(&self, ids: Vec<u32>, skip_special_tokens: bool) -> Result<String> {
+    pub fn decode(&self, ids: Vec<u64>, skip_special_tokens: bool) -> Result<String> {
         let tokens = ids
             .into_iter()
             .filter_map(|id| {
@@ -824,8 +824,8 @@ where
     fn do_tokenize<P: Into<PreTokenizedString>>(
         &self,
         pretokenized: P,
-        type_id: u32,
-        word_idx: Option<u32>,
+        type_id: u64,
+        word_idx: Option<usize>,
         offsets_type: OffsetType,
     ) -> Result<Encoding> {
         let mut pretokenized: PreTokenizedString = pretokenized.into();
@@ -1008,7 +1008,7 @@ where
     /// Decode all sentences in parallel
     pub fn decode_batch(
         &self,
-        sentences: Vec<Vec<u32>>,
+        sentences: Vec<Vec<u64>>,
         skip_special_tokens: bool,
     ) -> Result<Vec<String>>
     where

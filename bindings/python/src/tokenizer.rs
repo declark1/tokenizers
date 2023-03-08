@@ -631,7 +631,7 @@ impl PyTokenizer {
     ///     :obj:`Dict[str, int]`: The vocabulary
     #[pyo3(signature = (with_added_tokens = true))]
     #[pyo3(text_signature = "(self, with_added_tokens=True)")]
-    fn get_vocab(&self, with_added_tokens: bool) -> HashMap<String, u32> {
+    fn get_vocab(&self, with_added_tokens: bool) -> HashMap<String, u64> {
         self.tokenizer.get_vocab(with_added_tokens)
     }
 
@@ -1008,7 +1008,7 @@ impl PyTokenizer {
     ///     :obj:`str`: The decoded string
     #[pyo3(signature = (ids, skip_special_tokens = true))]
     #[pyo3(text_signature = "(self, ids, skip_special_tokens=True)")]
-    fn decode(&self, ids: Vec<u32>, skip_special_tokens: bool) -> PyResult<String> {
+    fn decode(&self, ids: Vec<u64>, skip_special_tokens: bool) -> PyResult<String> {
         ToPyResult(self.tokenizer.decode(ids, skip_special_tokens)).into()
     }
 
@@ -1028,7 +1028,7 @@ impl PyTokenizer {
     fn decode_batch(
         &self,
         py: Python<'_>,
-        sequences: Vec<Vec<u32>>,
+        sequences: Vec<Vec<u64>>,
         skip_special_tokens: bool,
     ) -> PyResult<Vec<String>> {
         py.allow_threads(|| {
@@ -1045,7 +1045,7 @@ impl PyTokenizer {
     /// Returns:
     ///     :obj:`Optional[int]`: An optional id, :obj:`None` if out of vocabulary
     #[pyo3(text_signature = "(self, token)")]
-    fn token_to_id(&self, token: &str) -> Option<u32> {
+    fn token_to_id(&self, token: &str) -> Option<u64> {
         self.tokenizer.token_to_id(token)
     }
 
@@ -1058,7 +1058,7 @@ impl PyTokenizer {
     /// Returns:
     ///     :obj:`Optional[str]`: An optional token, :obj:`None` if out of vocabulary
     #[pyo3(text_signature = "(self, id)")]
-    fn id_to_token(&self, id: u32) -> Option<String> {
+    fn id_to_token(&self, id: u64) -> Option<String> {
         self.tokenizer.id_to_token(id)
     }
 
